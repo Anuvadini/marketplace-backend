@@ -1,6 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
-import User from "./User.js";
+import User from "./Modals/User.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import fs from "fs";
@@ -98,31 +98,6 @@ app.post("/upload-file", verifyToken, async (req, res) => {
   }
 });
 
-// update user data
-// Your Business Name
-// Your Business URL (Website URL)
-// Upload Business Logo
-// Upload Profile Photo
-// Contact Person Name
-// Designation
-// Qualification
-// Specialization
-// Year of Experience
-// Email Id
-// Youtube video link
-// Contact Number
-// Address
-// City
-// State
-// Country
-// PIN Code
-// Offered Services (Comma Separated)
-// Professional Memberships
-// Awards And Achievements/Research & Publications
-// Keywords (Comma Separated)
-// Attach Multiple Files
-// Company Description
-
 app.put("/update-user-data", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -178,5 +153,5 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
