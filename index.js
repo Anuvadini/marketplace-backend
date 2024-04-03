@@ -3,15 +3,16 @@ import mongoose from "mongoose";
 import User from "./Modals/User.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import cors from "cors";
 import fs from "fs";
 import { createFolder } from "./Utils/directoryManagement.js";
 import connectDB from "./Utils/Dbconnection.js";
 
 const app = express();
 app.use(express.json());
-
+app.use(cors());
 const USERDATAFOLDER = "users";
-
+const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY
 // MongoDB connection
 connectDB()
 
@@ -22,9 +23,10 @@ app.post("/sign-up", async (req, res) => {
   try {
     const { email, password, userType } = req.body;
     const dirPath = createFolder(`${USERDATAFOLDER}/${email}`);
+    console.log("test",dirPath)
     const user = new User({ email, password, userType, dirPath });
     await user.save();
-    const token = jwt.sign({ id: user._id }, "secretKey", { expiresIn: "1h" });
+    const token = jwt.sign({ id: user._id }, JWT_PRIVATE_KEY, { expiresIn: "1h" });
     res.status(201).json({ token });
   } catch (error) {
     res.status(400).send(error.message);
@@ -39,7 +41,7 @@ app.post("/sign-in", async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).send("Authentication failed");
     }
-    const token = jwt.sign({ id: user._id }, "secretKey", { expiresIn: "1h" });
+    const token = jwt.sign({ id: user._id }, JWT_PRIVATE_KEY, { expiresIn: "10h" });
     res.json({ token, userType: user.userType });
   } catch (error) {
     res.status(400).send(error.message);
@@ -50,7 +52,7 @@ const verifyToken = (req, res, next) => {
   const token = req.header("Authorization");
   if (!token) return res.status(401).send("Access denied");
   try {
-    const verified = jwt.verify(token, "secretKey");
+    const verified = jwt.verify(token, JWT_PRIVATE_KEY);
     req.user = verified;
     next();
   } catch (error) {
@@ -60,8 +62,8 @@ const verifyToken = (req, res, next) => {
 
 const uploadFile = async (req, res, fileType) => {
   try {
-    const { filename, buffer } = req.body;
-    const user = await User.findById(req.user.id);
+    const { filename, buffer ,userid} = req.body;
+    const user = await User.findById(userid);
     const filePath = `${user.dirPath}/${fileType}/file`; // Assuming you want to name the file "file"
     createFolder(`${user.dirPath}/${fileType}`);
     fs.writeFileSync(filePath, buffer);
@@ -71,19 +73,19 @@ const uploadFile = async (req, res, fileType) => {
   }
 };
 
-app.post("/upload-profile-photo", verifyToken, async (req, res) => {
+app.post("/upload-profile-photo", async (req, res) => {
   uploadFile(req, res, "ProfilePic");
 });
 
-app.post("/upload-business-logo", verifyToken, async (req, res) => {
+app.post("/upload-business-logo", async (req, res) => {
   uploadFile(req, res, "BusinessLogo");
 });
 
 // MULTIPLE FILE UPLOAD
-app.post("/upload-file", verifyToken, async (req, res) => {
+app.post("/upload-file", async (req, res) => {
   try {
-    const { filename, buffer } = req.body;
-    const user = await User.findById(req.user.id);
+    const { filename, buffer ,userid} = req.body;
+    const user = await User.findById(userid);
     const filePath = `${user.dirPath}/Files/${filename}`;
     createFolder(`${user.dirPath}/Files`);
     fs.writeFileSync(filePath, buffer);
@@ -93,9 +95,9 @@ app.post("/upload-file", verifyToken, async (req, res) => {
   }
 });
 
-app.put("/update-user-data", verifyToken, async (req, res) => {
+app.put("/update-user-data", async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    
     const {
       businessName,
       profilePhoto,
@@ -118,7 +120,9 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
       keywords,
       files,
       companyDescription,
+      userid
     } = req.body;
+    const user = await User.findById(userid);
     user.businessName = businessName;
     user.profilePhoto = profilePhoto;
     user.contactPerson = contactPerson;

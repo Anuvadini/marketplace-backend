@@ -5,7 +5,7 @@ export function createFolder(folderPath) {
   if (!existsSync(folderPath)) {
     mkdirSync(folderPath);
     console.log("Folder created successfully.");
-    // return the folder path
+    return folderPath
   } else {
     console.log("Folder already exists.");
   }
