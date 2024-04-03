@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import fs from "fs";
 import { createFolder } from "./Utils/directoryManagement.js";
+import connectDB from "./Utils/Dbconnection.js";
 
 const app = express();
 app.use(express.json());
@@ -12,13 +13,7 @@ app.use(express.json());
 const USERDATAFOLDER = "users";
 
 // MongoDB connection
-mongoose
-  .connect("mongodb://localhost/userDB", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.log(err));
+connectDB()
 
 createFolder(USERDATAFOLDER);
 
