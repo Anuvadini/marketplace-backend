@@ -9,4 +9,5 @@ export function createFolder(folderPath) {
   } else {
     console.log("Folder already exists.");
   }
+  return folderPath;
 }

@@ -30,7 +30,7 @@ createFolder(USERDATAFOLDER);
 // Sign-Up Endpoint
 app.post("/sign-up", async (req, res) => {
   try {
-    const { email, password, userType } = req;
+    const { email, password, userType } = req.body;
     const dirPath = createFolder(`${USERDATAFOLDER}/${email}`);
     const user = new User({ email, password, userType, dirPath });
     await user.save();
