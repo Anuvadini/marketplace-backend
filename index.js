@@ -7,6 +7,7 @@ import fs from "fs";
 import cors from "cors";
 import { createFolder } from "./Utils/directoryManagement.js";
 import { upload, uploadDynamicFiles } from "./Utils/DataUpload.js";
+import connectDB from "./Utils/DBconnection.js";
 
 const DEBUG = true;
 
@@ -16,14 +17,7 @@ app.use(express.json());
 
 const USERDATAFOLDER = "users";
 
-// MongoDB connection
-mongoose
-  .connect("mongodb://localhost/userDB", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.log(err));
+connectDB()
 
 createFolder(USERDATAFOLDER);
 
