@@ -44,7 +44,7 @@ app.post("/sign-up", async (req, res) => {
 // Sign-In Endpoint
 app.post("/sign-in", async (req, res) => {
   try {
-    const { email, password } = req;
+    const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).send("Authentication failed");
@@ -180,7 +180,7 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
       keywords,
       files,
       companyDescription,
-    } = req;
+    } = req.body;
     user.businessName = businessName;
     user.profilePhoto = profilePhoto;
     user.contactPerson = contactPerson;
