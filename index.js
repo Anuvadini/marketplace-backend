@@ -8,6 +8,7 @@ import cors from "cors";
 import { createFolder } from "./Utils/directoryManagement.js";
 import { upload, uploadDynamicFiles } from "./Utils/DataUpload.js";
 import connectDB from "./Utils/DBconnection.js";
+import { uploadFilesToRag } from "./Utils/RagDB.js";
 
 const DEBUG = true;
 
@@ -17,7 +18,7 @@ app.use(express.json());
 
 const USERDATAFOLDER = "users";
 
-connectDB()
+connectDB();
 
 createFolder(USERDATAFOLDER);
 
@@ -66,27 +67,6 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// const uploadFile = async (req, res, fileType) => {
-//   try {
-//     const { filename, buffer } = req.body;
-//     const user = await User.findById(req.user.id);
-//     const filePath = `${user.dirPath}/${fileType}/file`; // Assuming you want to name the file "file"
-//     createFolder(`${user.dirPath}/${fileType}`);
-//     fs.writeFileSync(filePath, buffer);
-//     res.json({ filePath });
-//   } catch (error) {
-//     res.status(400).send(error.message);
-//   }
-// };
-
-// app.post("/upload-profile-photo", verifyToken, async (req, res) => {
-//   uploadFile(req, res, "ProfilePic");
-// });
-
-// app.post("/upload-business-logo", verifyToken, async (req, res) => {
-//   uploadFile(req, res, "BusinessLogo");
-// });
-
 app.post(
   "/upload-profile-photo",
   verifyToken,
@@ -94,8 +74,7 @@ app.post(
   async (req, res) => {
     try {
       if (!req.file) throw new Error("File is required");
-      const filePath = req.file.path; // The path where multer saved the file
-      // Additional logic here if needed, e.g., updating the user's profile with the file path
+      const filePath = req.file.path;
       res.json({ filePath });
     } catch (error) {
       res.status(400).send(error.message);
@@ -110,28 +89,13 @@ app.post(
   async (req, res) => {
     try {
       if (!req.file) throw new Error("File is required");
-      const filePath = req.file.path; // The path where multer saved the file
-      // Additional logic here if needed
+      const filePath = req.file.path;
       res.json({ filePath });
     } catch (error) {
       res.status(400).send(error.message);
     }
   }
 );
-
-// MULTIPLE FILE UPLOAD
-// app.post("/upload-file", verifyToken, async (req, res) => {
-//   try {
-//     const { filename, buffer } = req.body;
-//     const user = await User.findById(req.user.id);
-//     const filePath = `${user.dirPath}/Files/${filename}`;
-//     createFolder(`${user.dirPath}/Files`);
-//     fs.writeFileSync(filePath, buffer);
-//     res.json({ filePath });
-//   } catch (error) {
-//     res.status(400).send(error.message);
-//   }
-// });
 
 app.post(
   "/upload-files",
@@ -142,6 +106,9 @@ app.post(
       if (req.files.length === 0)
         throw new Error("At least one file is required.");
       const filePaths = req.files.map((file) => file.path);
+      const collection_name = uploadFilesToRag(filePaths, req.user.email);
+      const user = await User.findById(req.user.id);
+      user.collectionName = collection_name;
       res.json({ filePaths });
     } catch (error) {
       res.status(400).send(error.message);

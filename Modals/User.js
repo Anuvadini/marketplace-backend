@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema({
   businessName: String,
   profilePhoto: String,
 
+  collectionName: String,
+
   contactPerson: String,
   designation: String,
   qualification: String,
