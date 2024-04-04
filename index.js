@@ -8,6 +8,11 @@ import cors from "cors";
 import { createFolder } from "./Utils/directoryManagement.js";
 import { upload, uploadDynamicFiles } from "./Utils/DataUpload.js";
 import connectDB from "./Utils/DBconnection.js";
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const DEBUG = true;
 
@@ -22,6 +27,8 @@ connectDB()
 createFolder(USERDATAFOLDER);
 
 // Sign-Up Endpoint
+app.use('/file', express.static(join(__dirname, 'uploads')));
+
 app.post("/sign-up", async (req, res) => {
   try {
     const { email, password, userType } = req.body;
@@ -203,6 +210,29 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
     res.status(400).send(error.message);
   }
 });
+app.get("/fetch-list", async (req, res) => {
+  try {
+    const users = await User.find();
+    res.status(200).json({users});
+  } catch (error) {
+    console.error("Error fetching user list:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+app.get('/file/:filename', (req, res) => {
+  const { filename } = req.params;
+  console.log(filename);
+  const filePath = path.join(__dirname, 'uploads', filename); // Adjust as per your directory structure
 
+  // Check if the file exists
+  fs.access(filePath, fs.constants.F_OK, (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(404).send('File not found.');
+    }
+    // Serve the file
+    res.sendFile(filePath);
+  });
+});
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
