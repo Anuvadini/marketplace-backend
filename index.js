@@ -10,7 +10,7 @@ import { upload, uploadDynamicFiles } from "./Utils/DataUpload.js";
 import connectDB from "./Utils/DBconnection.js";
 import { uploadFilesToRag } from "./Utils/RagDB.js";
 
-const DEBUG = true;
+const DEBUG = false;
 
 const app = express();
 app.use(cors());
@@ -30,7 +30,7 @@ app.post("/sign-up", async (req, res) => {
     const user = new User({ email, password, userType, dirPath });
     await user.save();
     const token = jwt.sign({ id: user._id }, "secretKey", { expiresIn: "1h" });
-    res.status(201).json({ token });
+    res.status(201).json({ token, userType });
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -56,7 +56,12 @@ const verifyToken = (req, res, next) => {
     req.user = { id: "testuser" };
     return next();
   }
-  const token = req.header("Authorization");
+  let token = req.header("Authorization");
+  console.log(token);
+  // strip the Bearer keyword from the token
+  if (token.startsWith("Bearer ")) {
+    token = token.slice(7, token.length);
+  }
   if (!token) return res.status(401).send("Access denied");
   try {
     const verified = jwt.verify(token, "secretKey");
