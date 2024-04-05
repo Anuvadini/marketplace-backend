@@ -23,7 +23,14 @@ const userSchema = new mongoose.Schema({
   address: String,
   city: String,
   state: String,
-  country: String,
+  district: String,
+
+  manualForms: [],
+  autoForms: [],
+
+  availableHours: [],
+  availableDays: [],
+
   pinCode: String,
   services: [String], // Assuming services offered are multiple
   professionalMemberships: [String],

@@ -15,7 +15,7 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const DEBUG = true;
+const DEBUG = false;
 
 const app = express();
 app.use(cors());
@@ -33,11 +33,13 @@ app.use('/file', express.static(join(__dirname, 'uploads')));
 app.post("/sign-up", async (req, res) => {
   try {
     const { email, password, userType } = req.body;
+
     const dirPath = createFolder(`${USERDATAFOLDER}/${email}`);
     const user = new User({ email, password, userType, dirPath });
-    await user.save();
+    const response = await user.save();
+    console.log(response);
     const token = jwt.sign({ id: user._id }, "secretKey", { expiresIn: "1h" });
-    res.status(201).json({ token });
+    res.status(201).json({ token, userType });
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -63,7 +65,12 @@ const verifyToken = (req, res, next) => {
     req.user = { id: "testuser" };
     return next();
   }
-  const token = req.header("Authorization");
+  let token = req.header("Authorization");
+  console.log(token);
+  // strip the Bearer keyword from the token
+  if (token.startsWith("Bearer ")) {
+    token = token.slice(7, token.length);
+  }
   if (!token) return res.status(401).send("Access denied");
   try {
     const verified = jwt.verify(token, "secretKey");
@@ -113,11 +120,12 @@ app.post(
       if (req.files.length === 0)
         throw new Error("At least one file is required.");
       const filePaths = req.files.map((file) => file.path);
-      const collection_name = uploadFilesToRag(filePaths, req.body.email);
-      const user = await User.find({email : req.body.email} );
+      console.log(req.user);
+      const user = await User.findById(req.user.id);
+      const collection_name = uploadFilesToRag(filePaths, user.email);
       user.collectionName = collection_name;
       res.json({ filePaths });
-    } catch (error) {
+    } catch (errouserDBr) {
       res.status(400).send(error.message);
     }
   }
@@ -125,7 +133,7 @@ app.post(
 
 app.put("/update-user-data", verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.id);
+    const user = await User.findById(req.user.id);
     const {
       businessName,
       profilePhoto,
@@ -162,13 +170,15 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
     user.address = address;
     user.city = city;
 
+    user.availableHours = availableHours;
+    user.availableDays = availableDays;
     user.state = state;
     user.country = country;
     user.pinCode = pinCode;
-    user.services = services;
-    user.professionalMemberships = professionalMemberships;
-    user.awardsAndAchievements = awardsAndAchievements;
-    user.keywords = keywords;
+    user.services = services.split(",");
+    user.professionalMemberships = professionalMemberships.split(",");
+    user.awardsAndAchievements = awardsAndAchievements.split(",");
+    user.keywords = keywords.split(",");
     user.files = files;
     user.companyDescription = companyDescription;
     await user.save();
