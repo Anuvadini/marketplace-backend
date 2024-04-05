@@ -26,9 +26,11 @@ createFolder(USERDATAFOLDER);
 app.post("/sign-up", async (req, res) => {
   try {
     const { email, password, userType } = req.body;
+
     const dirPath = createFolder(`${USERDATAFOLDER}/${email}`);
     const user = new User({ email, password, userType, dirPath });
-    await user.save();
+    const response = await user.save();
+    console.log(response);
     const token = jwt.sign({ id: user._id }, "secretKey", { expiresIn: "1h" });
     res.status(201).json({ token, userType });
   } catch (error) {
@@ -116,7 +118,7 @@ app.post(
       const collection_name = uploadFilesToRag(filePaths, user.email);
       user.collectionName = collection_name;
       res.json({ filePaths });
-    } catch (error) {
+    } catch (errouserDBr) {
       res.status(400).send(error.message);
     }
   }
@@ -161,13 +163,15 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
     user.address = address;
     user.city = city;
 
+    user.availableHours = availableHours;
+    user.availableDays = availableDays;
     user.state = state;
     user.country = country;
     user.pinCode = pinCode;
-    user.services = services;
-    user.professionalMemberships = professionalMemberships;
-    user.awardsAndAchievements = awardsAndAchievements;
-    user.keywords = keywords;
+    user.services = services.split(",");
+    user.professionalMemberships = professionalMemberships.split(",");
+    user.awardsAndAchievements = awardsAndAchievements.split(",");
+    user.keywords = keywords.split(",");
     user.files = files;
     user.companyDescription = companyDescription;
     await user.save();
