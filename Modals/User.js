@@ -6,9 +6,9 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   userType: { type: String, required: true },
   dirPath: { type: String, required: true },
+  profilePhoto: { type: String, required: true },
 
   businessName: String,
-  profilePhoto: String,
 
   collectionName: String,
 

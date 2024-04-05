@@ -9,8 +9,8 @@ import { createFolder } from "./Utils/directoryManagement.js";
 import { upload, uploadDynamicFiles } from "./Utils/DataUpload.js";
 import connectDB from "./Utils/DBconnection.js";
 import { uploadFilesToRag } from "./Utils/RagDB.js";
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -28,14 +28,13 @@ connectDB();
 createFolder(USERDATAFOLDER);
 
 // Sign-Up Endpoint
-app.use('/file', express.static(join(__dirname, 'uploads')));
+app.use("/file", express.static(join(__dirname, "uploads")));
 
 app.post("/sign-up", async (req, res) => {
   try {
-    const { email, password, userType } = req.body;
-
+    const { email, password, userType, profilePhoto } = req.body;
     const dirPath = createFolder(`${USERDATAFOLDER}/${email}`);
-    const user = new User({ email, password, userType, dirPath });
+    const user = new User({ email, password, userType, dirPath, profilePhoto });
     const response = await user.save();
     console.log(response);
     const token = jwt.sign({ id: user._id }, "secretKey", { expiresIn: "1h" });
@@ -189,23 +188,26 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
 });
 app.get("/fetch-list", async (req, res) => {
   try {
-    const users = await User.find({userType:"1"});
-    res.status(200).json({users});
+    let users = await User.find({ userType: "1" });
+    // get users with type Merchant
+    const merchants = await User.find({ userType: "merchant" });
+    users = users.concat(merchants);
+    res.status(200).json({ users });
   } catch (error) {
     console.error("Error fetching user list:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
-app.get('/file/:filename', (req, res) => {
+app.get("/file/:filename", (req, res) => {
   const { filename } = req.params;
   console.log(filename);
-  const filePath = path.join(__dirname, 'uploads', filename); // Adjust as per your directory structure
+  const filePath = path.join(__dirname, "uploads", filename); // Adjust as per your directory structure
 
   // Check if the file exists
   fs.access(filePath, fs.constants.F_OK, (err) => {
     if (err) {
       console.error(err);
-      return res.status(404).send('File not found.');
+      return res.status(404).send("File not found.");
     }
     // Serve the file
     res.sendFile(filePath);
