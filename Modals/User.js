@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema({
   district: String,
 
   manualForms: [],
+  manualFormsFilled: [],
   autoForms: [],
 
   availableHours: [],

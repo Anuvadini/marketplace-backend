@@ -11,6 +11,7 @@ import connectDB from "./Utils/DBconnection.js";
 import { uploadFilesToRag } from "./Utils/RagDB.js";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { v4 as uuidv4 } from "uuid";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -211,6 +212,59 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
     res.status(400).send(error.message);
   }
 });
+
+// save manually created form data
+app.post("/save-manual-form", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    user.manualForms.push({
+      formID: uuidv4(),
+      formName: req.body.formName,
+      formData: req.body.formData,
+      formDescription: req.body.formDescription,
+    });
+    await user.save();
+    res.json(user);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
+// save filled manually created form data
+app.post("/save-filled-manual-form", async (req, res) => {
+  try {
+    const user = await User.findById(req.body.id);
+    user.manualFormsFilled.push({
+      formID: req.body.formID,
+      formData: req.body.formData,
+    });
+    await user.save();
+    res.json(user);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
+// get all manually created forms
+app.get("/fetch-manual-forms", async (req, res) => {
+  try {
+    const user = await User.findById(req.body.id);
+    res.json(user.manualForms);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
+// get all auto generated forms
+app.get("/fetch-auto-forms", async (req, res) => {
+  try {
+    const user = await User.findById(req.body.id);
+    res.json(user.autoForms);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
 app.get("/fetch-list", async (req, res) => {
   try {
     let users = await User.find({ userType: "1" });
