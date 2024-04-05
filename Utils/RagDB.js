@@ -4,6 +4,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 
 export async function uploadFilesToRag(filePaths, email_id) {
+  console.log(filePaths, email_id);
   const document_id = uuidv4();
 
   const form = new FormData();

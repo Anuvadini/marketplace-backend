@@ -111,8 +111,9 @@ app.post(
       if (req.files.length === 0)
         throw new Error("At least one file is required.");
       const filePaths = req.files.map((file) => file.path);
-      const collection_name = uploadFilesToRag(filePaths, req.user.email);
+      console.log(req.user);
       const user = await User.findById(req.user.id);
+      const collection_name = uploadFilesToRag(filePaths, user.email);
       user.collectionName = collection_name;
       res.json({ filePaths });
     } catch (error) {
@@ -123,7 +124,7 @@ app.post(
 
 app.put("/update-user-data", verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.id);
+    const user = await User.findById(req.user.id);
     const {
       businessName,
       profilePhoto,
