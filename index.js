@@ -90,8 +90,6 @@ const verifyToken = (req, res, next) => {
     return next();
   }
   let token = req.header("Authorization");
-  console.log(token);
-  // strip the Bearer keyword from the token
   if (token.startsWith("Bearer ")) {
     token = token.slice(7, token.length);
   }
@@ -180,6 +178,8 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
       keywords,
       files,
       companyDescription,
+      availableHours,
+      availableDays,
     } = req.body;
     user.businessName = businessName;
     user.profilePhoto = profilePhoto;
@@ -202,7 +202,7 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
     user.services = services.split(",");
     user.professionalMemberships = professionalMemberships.split(",");
     user.awardsAndAchievements = awardsAndAchievements.split(",");
-    user.keywords = keywords.split(",");
+    user.keywords = keywords;
     user.files = files;
     user.companyDescription = companyDescription;
     await user.save();
@@ -226,7 +226,7 @@ app.get("/fetch-list", async (req, res) => {
 app.get("/file/:filename", (req, res) => {
   const { filename } = req.params;
   console.log(filename);
-  const filePath = path.join(__dirname, "uploads", filename); // Adjust as per your directory structure
+  const filePath = path.join(__dirname, "users", filename); // Adjust as per your directory structure
 
   // Check if the file exists
   fs.access(filePath, fs.constants.F_OK, (err) => {
@@ -238,5 +238,19 @@ app.get("/file/:filename", (req, res) => {
     res.sendFile(filePath);
   });
 });
+
+// get available time list of merchant
+app.get("/fetch-available-time", async (req, res) => {
+  try {
+    const user = await User.findById(req.body.id);
+    res.json({
+      availableHours: user.availableHours,
+      availableDays: user.availableDays,
+    });
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
