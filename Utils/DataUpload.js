@@ -11,8 +11,7 @@ const ensureDirSync = (dirPath) => {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // You can adjust the path as needed, possibly using user information from req.user if available
-    const basePath = `uploads/${req.user.id}/${file.fieldname}`; // file.fieldname would be 'profilePhoto' or 'businessLogo' based on the input name
+    const basePath = `users/${req.user.id}/${file.fieldname}`; // file.fieldname would be 'profilePhoto' or 'businessLogo' based on the input name
     ensureDirSync(basePath);
     cb(null, basePath);
   },
@@ -30,7 +29,7 @@ const upload = multer({ storage: storage });
 
 const dynamicStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const basePath = `uploads/${req.user.id}/Files`; // Dynamic directory based on the user
+    const basePath = `users/${req.user.id}/Files`; // Dynamic directory based on the user
     ensureDirSync(basePath);
     cb(null, basePath);
   },

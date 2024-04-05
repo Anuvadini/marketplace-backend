@@ -30,11 +30,36 @@ createFolder(USERDATAFOLDER);
 // Sign-Up Endpoint
 app.use("/file", express.static(join(__dirname, "uploads")));
 
+// email
+// password
+// userType
+// fullname
+// mobilenumber
+// gender
+// language
 app.post("/sign-up", async (req, res) => {
   try {
-    const { email, password, userType, profilePhoto } = req.body;
+    const {
+      email,
+      password,
+      userType,
+      fullname,
+      mobilenumber,
+      gender,
+      language,
+    } = req.body;
+
     const dirPath = createFolder(`${USERDATAFOLDER}/${email}`);
-    const user = new User({ email, password, userType, dirPath, profilePhoto });
+    const user = new User({
+      email,
+      password,
+      userType,
+      fullname,
+      mobilenumber,
+      gender,
+      language,
+      dirPath,
+    });
     const response = await user.save();
     console.log(response);
     const token = jwt.sign({ id: user._id }, "secretKey", { expiresIn: "1h" });
