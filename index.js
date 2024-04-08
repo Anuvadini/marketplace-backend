@@ -10,7 +10,7 @@ import { upload, uploadDynamicFiles } from "./Utils/DataUpload.js";
 import connectDB from "./Utils/DBconnection.js";
 import { uploadFilesToRag } from "./Utils/RagDB.js";
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import path, { dirname, join } from "path";
 import { v4 as uuidv4 } from "uuid";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -200,9 +200,23 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
     user.state = state;
     user.country = country;
     user.pinCode = pinCode;
-    user.services = services.split(",");
-    user.professionalMemberships = professionalMemberships.split(",");
-    user.awardsAndAchievements = awardsAndAchievements.split(",");
+    if (services) {
+      user.services = services.split(",");
+  } else {
+      user.services = [];
+  }
+  
+  if (professionalMemberships) {
+      user.professionalMemberships = professionalMemberships.split(",");
+  } else {
+      user.professionalMemberships = [];
+  }
+  
+  if (awardsAndAchievements) {
+      user.awardsAndAchievements = awardsAndAchievements.split(",");
+  } else {
+      user.awardsAndAchievements = [];
+  }
     user.keywords = keywords;
     user.files = files;
     user.companyDescription = companyDescription;
@@ -214,7 +228,7 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
 });
 
 // save manually created form data
-app.post("/save-manual-form", verifyToken, async (req, res) => {
+app.post("/save-manually-created-form", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     user.manualForms.push({
@@ -231,7 +245,7 @@ app.post("/save-manual-form", verifyToken, async (req, res) => {
 });
 
 // save filled manually created form data
-app.post("/save-filled-manual-form", async (req, res) => {
+app.post("/save-filled-manual-form",async (req, res) => {
   try {
     const user = await User.findById(req.body.id);
     user.manualFormsFilled.push({
@@ -247,14 +261,27 @@ app.post("/save-filled-manual-form", async (req, res) => {
 
 // get all manually created forms
 app.get("/fetch-manual-forms", async (req, res) => {
-  try {
-    const user = await User.findById(req.body.id);
-    res.json(user.manualForms);
+    try {
+    const user = await User.findById(req.body.id);  
+        res.json(user.manualForms);
   } catch (error) {
     res.status(400).send(error.message);
   }
 });
-
+app.post("/add-generated-forms", verifyToken, async (req, res) => {
+  try{
+    const { formid } = req.body;
+    const user = await User.findById(req.user.id);
+    user.autoForms.push({
+     formid
+    });
+    await user.save();
+    res.json(user);
+  }
+  catch(error){
+    res.status(400).send(error.message);
+  }
+})
 // get all auto generated forms
 app.get("/fetch-auto-forms", async (req, res) => {
   try {
@@ -277,10 +304,10 @@ app.get("/fetch-list", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-app.get("/file/:filename", (req, res) => {
-  const { filename } = req.params;
-  console.log(filename);
-  const filePath = path.join(__dirname, "users", filename); // Adjust as per your directory structure
+app.get("/file/users/:userId/profilePhoto/:filename", (req, res) => {
+  const { userId, filename } = req.params;
+
+  const filePath = path.join(__dirname, "users", userId, "profilePhoto", filename);
 
   // Check if the file exists
   fs.access(filePath, fs.constants.F_OK, (err) => {
@@ -295,7 +322,7 @@ app.get("/file/:filename", (req, res) => {
 
 // get available time list of merchant
 app.get("/fetch-available-time", async (req, res) => {
-  try {
+    try {
     const user = await User.findById(req.body.id);
     res.json({
       availableHours: user.availableHours,
