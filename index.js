@@ -12,6 +12,8 @@ import { uploadFilesToRag } from "./Utils/RagDB.js";
 import { fileURLToPath } from "url";
 import path, { dirname, join } from "path";
 import { v4 as uuidv4 } from "uuid";
+// path
+import path from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -49,6 +51,8 @@ app.post("/sign-up", async (req, res) => {
       gender,
       language,
     } = req.body;
+
+    console.log(req.body);
 
     const dirPath = createFolder(`${USERDATAFOLDER}/${email}`);
     const user = new User({
@@ -145,8 +149,11 @@ app.post(
       const filePaths = req.files.map((file) => file.path);
       console.log(req.user);
       const user = await User.findById(req.user.id);
-      const collection_name = uploadFilesToRag(filePaths, user.email);
+      const document_id = await uploadFilesToRag(filePaths, user.email);
+      const collection_name = user.email + "_" + document_id;
+      console.log(collection_name);
       user.collectionName = collection_name;
+      await user.save();
       res.json({ filePaths });
     } catch (errouserDBr) {
       res.status(400).send(error.message);
@@ -159,67 +166,74 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
     const user = await User.findById(req.user.id);
     const {
       businessName,
-      profilePhoto,
-      contactPerson,
+      businessURL,
+      profilePhoto, // Previously profilePhoto
+      businessLogo,
+      contactPerson, // Previously contactPerson
       designation,
       qualification,
       specialization,
-      experienceYears,
-      buisnessEmail,
+      experienceYears, // Previously experienceYears
+      emailId, // Previously buisnessEmail
       youtubeVideoLink,
       contactNumber,
       address,
       city,
       state,
-      country,
+      district, // New field not previously handled
       pinCode,
-      services,
+      services, // Previously services
+      availableHours,
+      availableDays,
       professionalMemberships,
       awardsAndAchievements,
       keywords,
-      files,
+      files, // Previously files
       companyDescription,
-      availableHours,
-      availableDays,
     } = req.body;
+
+    console.log(req.body);
+
     user.businessName = businessName;
-    user.profilePhoto = profilePhoto;
+    user.businessURL = businessURL; // Added
+    user.profilePhoto = profilePhoto; // Assuming this is intended as the main profile/business logo
+    user.businessLogo = businessLogo; // Assuming this is intended as the secondary logo
     user.contactPerson = contactPerson;
     user.designation = designation;
     user.qualification = qualification;
     user.specialization = specialization;
     user.experienceYears = experienceYears;
-    user.buisnessEmail = buisnessEmail;
+    user.buisnessEmail = emailId;
     user.youtubeVideoLink = youtubeVideoLink;
     user.contactNumber = contactNumber;
     user.address = address;
     user.city = city;
-
-    user.availableHours = availableHours;
-    user.availableDays = availableDays;
     user.state = state;
-    user.country = country;
+    user.district = district; // Updated to handle district
     user.pinCode = pinCode;
     if (services) {
       user.services = services.split(",");
-  } else {
+    } else {
       user.services = [];
-  }
-  
-  if (professionalMemberships) {
+    }
+
+    if (professionalMemberships) {
       user.professionalMemberships = professionalMemberships.split(",");
-  } else {
+    } else {
       user.professionalMemberships = [];
-  }
-  
-  if (awardsAndAchievements) {
+    }
+
+    if (awardsAndAchievements) {
       user.awardsAndAchievements = awardsAndAchievements.split(",");
-  } else {
+    } else {
       user.awardsAndAchievements = [];
-  }
+    }
     user.keywords = keywords;
     user.files = files;
     user.companyDescription = companyDescription;
+    user.availableHours = availableHours;
+    user.availableDays = availableDays;
+
     await user.save();
     res.json(user);
   } catch (error) {
@@ -245,7 +259,7 @@ app.post("/save-manually-created-form", verifyToken, async (req, res) => {
 });
 
 // save filled manually created form data
-app.post("/save-filled-manual-form",async (req, res) => {
+app.post("/save-filled-manual-form", async (req, res) => {
   try {
     const user = await User.findById(req.body.id);
     user.manualFormsFilled.push({
@@ -261,27 +275,26 @@ app.post("/save-filled-manual-form",async (req, res) => {
 
 // get all manually created forms
 app.get("/fetch-manual-forms", async (req, res) => {
-    try {
-    const user = await User.findById(req.body.id);  
-        res.json(user.manualForms);
+  try {
+    const user = await User.findById(req.body.id);
+    res.json(user.manualForms);
   } catch (error) {
     res.status(400).send(error.message);
   }
 });
 app.post("/add-generated-forms", verifyToken, async (req, res) => {
-  try{
+  try {
     const { formid } = req.body;
     const user = await User.findById(req.user.id);
     user.autoForms.push({
-     formid
+      formid,
     });
     await user.save();
     res.json(user);
-  }
-  catch(error){
+  } catch (error) {
     res.status(400).send(error.message);
   }
-})
+});
 // get all auto generated forms
 app.get("/fetch-auto-forms", async (req, res) => {
   try {
@@ -304,10 +317,52 @@ app.get("/fetch-list", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-app.get("/file/users/:userId/profilePhoto/:filename", (req, res) => {
-  const { userId, filename } = req.params;
 
-  const filePath = path.join(__dirname, "users", userId, "profilePhoto", filename);
+app.get("/users/:userId/profilePhoto/:filename", (req, res) => {
+  const { userId, filename } = req.params;
+  const filePath = path.join(
+    __dirname,
+    "users",
+    userId,
+    "profilePhoto",
+    filename
+  );
+
+  // Check if the file exists
+  fs.access(filePath, fs.constants.F_OK, (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(404).send("File not found.");
+    }
+    // Serve the file
+    res.sendFile(filePath);
+  });
+});
+
+// http://localhost:5050/users/66168d48a700874a2ddf1e09/businessLogo/businessLogo-1712753992965-332910290.png
+app.get("/users/:userId/businessLogo/:filename", (req, res) => {
+  const { userId, filename } = req.params;
+  const filePath = path.join(
+    __dirname,
+    "users",
+    userId,
+    "businessLogo",
+    filename
+  );
+
+  // Check if the file exists
+  fs.access(filePath, fs.constants.F_OK, (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(404).send("File not found.");
+    }
+    // Serve the file
+    res.sendFile(filePath);
+  });
+});
+app.get("/file/:filename", (req, res) => {
+  const { filename } = req.params;
+  const filePath = path.join(__dirname, "users", filename); // Adjust as per your directory structure
 
   // Check if the file exists
   fs.access(filePath, fs.constants.F_OK, (err) => {
@@ -322,7 +377,7 @@ app.get("/file/users/:userId/profilePhoto/:filename", (req, res) => {
 
 // get available time list of merchant
 app.get("/fetch-available-time", async (req, res) => {
-    try {
+  try {
     const user = await User.findById(req.body.id);
     res.json({
       availableHours: user.availableHours,

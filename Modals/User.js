@@ -11,10 +11,9 @@ const userSchema = new mongoose.Schema({
   gender: { type: String, required: true },
   language: { type: String, required: true },
   businessName: String,
-  profilePhoto: String,
-
-  collectionName: String,
-
+  businessURL: String, // Added
+  profilePhoto: String, // Note: This was previously in your model. Adjust as needed.
+  businessLogo: String, // Added
   contactPerson: String,
   designation: String,
   qualification: String,
@@ -27,21 +26,16 @@ const userSchema = new mongoose.Schema({
   city: String,
   state: String,
   district: String,
-
-  manualForms: [],
-  manualFormsFilled: [],
-  autoForms: [],
-
-  availableHours: [],
-  availableDays: [],
-
   pinCode: String,
-  services: [String], // Assuming services offered are multiple
-  professionalMemberships: [String],
-  awardsAndAchievements: [String], // Assuming multiple awards/publications
-  keywords: [String],
-  files: [String], // Assuming file paths are stored as strings
+  services: [String], // No change needed if the frontend sends an array
+  professionalMemberships: [String], // No change needed if the frontend sends an array
+  awardsAndAchievements: [String], // No change needed if the frontend sends an array
+  keywords: [String], // No change needed if the frontend sends an array
+  files: [String], // Assuming file paths. No change if the frontend sends an array
   companyDescription: String,
+  availableHours: [], // Assuming this remains an array of strings or objects as per the design
+  availableDays: [], // Same as above
+  collectionName: String,
 });
 
 // Pre-save hook to hash password before saving a user document

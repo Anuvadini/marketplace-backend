@@ -25,7 +25,9 @@ export async function uploadFilesToRag(filePaths, email_id) {
       }
     );
 
-    const collectionName = response.data.collection_name;
+    console.log(response.data);
+
+    const collectionName = response.data.document_id;
 
     return collectionName;
   } catch (error) {
