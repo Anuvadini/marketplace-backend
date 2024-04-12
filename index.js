@@ -12,8 +12,6 @@ import { uploadFilesToRag } from "./Utils/RagDB.js";
 import { fileURLToPath } from "url";
 import path, { dirname, join } from "path";
 import { v4 as uuidv4 } from "uuid";
-// path
-import path from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -164,6 +162,7 @@ app.post(
 app.put("/update-user-data", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
+    console
     const {
       businessName,
       businessURL,
@@ -339,7 +338,6 @@ app.get("/users/:userId/profilePhoto/:filename", (req, res) => {
   });
 });
 
-// http://localhost:5050/users/66168d48a700874a2ddf1e09/businessLogo/businessLogo-1712753992965-332910290.png
 app.get("/users/:userId/businessLogo/:filename", (req, res) => {
   const { userId, filename } = req.params;
   const filePath = path.join(
@@ -376,12 +374,13 @@ app.get("/file/:filename", (req, res) => {
 });
 
 // get available time list of merchant
-app.get("/fetch-available-time", async (req, res) => {
+app.post("/fetch-available-time", async (req, res) => {
   try {
+    console.log(req.body)
     const user = await User.findById(req.body.id);
     res.json({
       availableHours: user.availableHours,
-      availableDays: user.availableDays,
+      // availableDays: user.availableDays,
     });
   } catch (error) {
     res.status(400).send(error.message);
