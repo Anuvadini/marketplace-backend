@@ -388,5 +388,5 @@ app.get("/fetch-available-time", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3232;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
