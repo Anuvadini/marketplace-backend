@@ -13,7 +13,7 @@ import { fileURLToPath } from "url";
 import path, { dirname, join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import command from "nodemon/lib/config/command.js";
-import sendEmail from "./Utils/Mailer.js";
+// import sendEmail from "./Utils/Mailer.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -286,6 +286,16 @@ app.post("/fetch-manual-forms", async (req, res) => {
     res.status(400).send(error.message);
   }
 });
+
+app.post("/fetch-manual-forms-filled", async (req, res) => {
+  try {
+    const user = await User.findById(req.body.id);
+    res.json(user.manualFormsFilled);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
 app.post("/add-generated-forms", verifyToken, async (req, res) => {
   try {
     const { formid } = req.body;
@@ -316,27 +326,24 @@ app.post("/book-appointment", async (req, res) => {
   try {
     const user = await User.findById(req.body.id);
     const formdata = req.body.FormData;
+    const dateandtime = formdata.dateandtime; // format Selected Date: 11/4/2024,Selected Time: 8:15 AM
+    const parts = dateandtime.split(",");
+    const datePart = parts[0].split(": ")[1];
+    const timePart = parts[1].trim().split(": ")[1];
     user.appointments.push({
       appointmentID: uuidv4(),
-      appointmentDate: formdata.appointmentDate,
-      appointmentTime: formdata.appointmentTime,
-      firstname: formdata.firstname,
-      lastname: formdata.lastname,
-      mobile: formdata.mobile,
-      company: formdata.company,
-      website: formdata.website,
-      discussion: formdata.discussion,
+      appointmentDate: datePart,
+      appointmentTime: timePart,
+      firstname: formdata.FirstName,
+      lastname: formdata.LastName,
+      mobile: formdata.MobilePn,
+      company: formdata.CompanyName,
+      website: formdata.websiteUrl,
+      discussion: formdata.DiscusseAbt,
+      email: formdata.Email,
     });
 
     await user.save();
-
-    sendEmail(
-      user.email,
-      "Appointment Booked with " + user.businessName,
-      `Your appointment has been booked successfully. The merchant will respond with the confirmation soon.`
-    );
-
-    res.json(user);
   } catch (error) {
     res.status(400).send(error.message);
   }
