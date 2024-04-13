@@ -13,6 +13,7 @@ import { fileURLToPath } from "url";
 import path, { dirname, join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import command from "nodemon/lib/config/command.js";
+import sendEmail from "./Utils/Mailer.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -325,7 +326,15 @@ app.post("/book-appointment", async (req, res) => {
       website: req.body.website,
       discussion: req.body.discussion,
     });
+
     await user.save();
+
+    sendEmail(
+      user.email,
+      "Appointment Booked with " + user.businessName,
+      `Your appointment has been booked successfully. The merchant will respond with the confirmation soon.`
+    );
+
     res.json(user);
   } catch (error) {
     res.status(400).send(error.message);
