@@ -12,6 +12,7 @@ import { uploadFilesToRag } from "./Utils/RagDB.js";
 import { fileURLToPath } from "url";
 import path, { dirname, join } from "path";
 import { v4 as uuidv4 } from "uuid";
+import command from "nodemon/lib/config/command.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -162,7 +163,6 @@ app.post(
 app.put("/update-user-data", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    console
     const {
       businessName,
       businessURL,
@@ -304,6 +304,28 @@ app.get("/fetch-auto-forms", async (req, res) => {
   }
 });
 
+// book appointment
+app.post("/book-appointment", async (req, res) => {
+  try {
+    const user = await User.findById(req.body.id);
+    user.appointments.push({
+      appointmentID: uuidv4(),
+      appointmentDate: req.body.appointmentDate,
+      appointmentTime: req.body.appointmentTime,
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
+      mobile: req.body.mobile,
+      company: req.body.company,
+      website: req.body.website,
+      discussion: req.body.discussion,
+    });
+    await user.save();
+    res.json(user);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
 app.get("/fetch-list", async (req, res) => {
   try {
     let users = await User.find({ userType: "1" });
@@ -376,16 +398,21 @@ app.get("/file/:filename", (req, res) => {
 // get available time list of merchant
 app.post("/fetch-available-time", async (req, res) => {
   try {
-    console.log(req.body)
+    console.log(req.body);
     const user = await User.findById(req.body.id);
-    res.json({
-      availableHours: user.availableHours,
-      // availableDays: user.availableDays,
-    });
+    res.json({ availableHours: user.availableHours });
   } catch (error) {
     res.status(400).send(error.message);
   }
 });
 
+app.get("/fetch-user-data", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.json(user);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
 const PORT = process.env.PORT || 3232;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
