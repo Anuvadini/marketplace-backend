@@ -315,16 +315,17 @@ app.get("/fetch-auto-forms", async (req, res) => {
 app.post("/book-appointment", async (req, res) => {
   try {
     const user = await User.findById(req.body.id);
+    const formdata = req.body.FormData;
     user.appointments.push({
       appointmentID: uuidv4(),
-      appointmentDate: req.body.appointmentDate,
-      appointmentTime: req.body.appointmentTime,
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
-      mobile: req.body.mobile,
-      company: req.body.company,
-      website: req.body.website,
-      discussion: req.body.discussion,
+      appointmentDate: formdata.appointmentDate,
+      appointmentTime: formdata.appointmentTime,
+      firstname: formdata.firstname,
+      lastname: formdata.lastname,
+      mobile: formdata.mobile,
+      company: formdata.company,
+      website: formdata.website,
+      discussion: formdata.discussion,
     });
 
     await user.save();
