@@ -277,7 +277,7 @@ app.post("/save-filled-manual-form", async (req, res) => {
 });
 
 // get all manually created forms
-app.get("/fetch-manual-forms", async (req, res) => {
+app.post("/fetch-manual-forms", async (req, res) => {
   try {
     const user = await User.findById(req.body.id);
     res.json(user.manualForms);
