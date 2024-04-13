@@ -244,6 +244,10 @@ app.put("/update-user-data", verifyToken, async (req, res) => {
 app.post("/save-manually-created-form", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
+    // check if manualForms is not defined
+    if (!user.manualForms) {
+      user.manualForms = [];
+    }
     user.manualForms.push({
       formID: uuidv4(),
       formName: req.body.formName,
@@ -284,10 +288,12 @@ app.get("/fetch-manual-forms", async (req, res) => {
 app.post("/add-generated-forms", verifyToken, async (req, res) => {
   try {
     const { formid } = req.body;
+    console.log(formid);
     const user = await User.findById(req.user.id);
-    user.autoForms.push({
-      formid,
-    });
+    if (!user.autoForms) {
+      user.autoForms = [];
+    }
+    user.autoForms.push(formid);
     await user.save();
     res.json(user);
   } catch (error) {
