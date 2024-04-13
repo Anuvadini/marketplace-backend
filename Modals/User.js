@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
   autoForms: [], // No change needed if the frontend sends an array
   manualForms: [], // No change needed if the frontend sends an array
   manualFormsFilled: [], // No change needed if the frontend sends an array
-
+  appointments: [], // No change needed if the frontend sends an array
   services: [String], // No change needed if the frontend sends an array
   professionalMemberships: [String], // No change needed if the frontend sends an array
   awardsAndAchievements: [String], // No change needed if the frontend sends an array
