@@ -13,6 +13,7 @@ import { fileURLToPath } from "url";
 import path, { dirname, join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import command from "nodemon/lib/config/command.js";
+import { sendEmailto } from "./Utils/Mailer.js";
 // import sendEmail from "./Utils/Mailer.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -344,6 +345,9 @@ app.post("/book-appointment", async (req, res) => {
     });
 
     await user.save();
+    sendEmailto(formdata.Email,formdata.FirstName,formdata.dateandtime, user.businessName)
+    let appointment = user.appointments
+    res.status(200).json({ appointment });
   } catch (error) {
     res.status(400).send(error.message);
   }
