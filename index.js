@@ -345,8 +345,13 @@ app.post("/book-appointment", async (req, res) => {
     });
 
     await user.save();
-    sendEmailto(formdata.Email,formdata.FirstName,formdata.dateandtime, user.businessName)
-    let appointment = user.appointments
+    sendEmailto(
+      formdata.Email,
+      formdata.FirstName,
+      formdata.dateandtime,
+      user.businessName
+    );
+    let appointment = user.appointments;
     res.status(200).json({ appointment });
   } catch (error) {
     res.status(400).send(error.message);
@@ -426,7 +431,9 @@ app.get("/file/:filename", (req, res) => {
 app.post("/fetch-available-time", async (req, res) => {
   try {
     console.log(req.body);
+    console.log(req.body.id);
     const user = await User.findById(req.body.id);
+    console.log(user);
     res.json({ availableHours: user.availableHours });
   } catch (error) {
     res.status(400).send(error.message);
