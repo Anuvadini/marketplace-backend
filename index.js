@@ -448,5 +448,5 @@ app.get("/fetch-user-data", verifyToken, async (req, res) => {
     res.status(400).send(error.message);
   }
 });
-const PORT = process.env.PORT || 3232;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
