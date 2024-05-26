@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import fs from "fs";
 import cors from "cors";
+import { Server } from "socket.io";
 import { createFolder } from "./Utils/directoryManagement.js";
 import { upload, uploadDynamicFiles } from "./Utils/DataUpload.js";
 import connectDB from "./Utils/DBconnection.js";
@@ -14,6 +15,7 @@ import path, { dirname, join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import command from "nodemon/lib/config/command.js";
 import { sendEmailto } from "./Utils/Mailer.js";
+import http from "http";
 // import sendEmail from "./Utils/Mailer.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -449,4 +451,96 @@ app.get("/fetch-user-data", verifyToken, async (req, res) => {
   }
 });
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: { origin: "*", credentials: true },
+});
+
+const port = 7273;
+const userList = {}; // Object to store user data
+
+// const liveSession = new LiveSession();
+
+io.on("connection", (socket) => {
+  const GLOBAL_ROOM = "LokSabha";
+  socket.on("joinRoom", (userId) => {
+    socket.join(GLOBAL_ROOM);
+    userList[userId] = socket.id; //join user in room
+  });
+
+  socket.on("disconnect", () => {
+    // Remove the user from the stored data when they disconnect
+    const userId = Object.keys(userList).find(
+        (key) => userList[key] === socket.id
+    );
+    delete userList[userId];
+  });
+
+  socket.on("send-message", ( data ) => {
+
+    const { receiver_id, message } = data;
+   /* liveSession.addMessage({
+      sessionID,
+      sender: username,
+      session: GLOBAL_ROOM,
+      gender,
+      inputlanguage: lang,
+      translatedTexts: translated,
+      startTime: start,
+      endTime: end,
+    });*/
+
+   /* socket.broadcast.to(GLOBAL_ROOM).emit("receive-message", {
+      username,
+      gender,
+      translated,
+      start,
+      end,
+    });*/
+
+    socket.broadcast.to( userList[receiver_id] ).emit( "receive-message", {
+      receiver_id,
+      message
+    } );
+
+  });
+
+  //============= send and receive a speak request ==============//
+  socket.on("send-speak-request", async (arg) => {
+    const { admin } = arg;
+    const targetAdmin = userList[admin];
+    socket.broadcast.to(targetAdmin).emit("request-received");
+  });
+  // ============================================================ //
+  socket.on("new-speaker-request-response", async (params) => {
+    const { id, status } = params;
+    const targetUser = userList[id];
+    if (status === 3) {
+      socket.broadcast.to(targetUser).emit("speaker-response", {
+        status: "error",
+        message: "Speaker Rejected Your Request!",
+      });
+    } else {
+      const data = await SpeakRequestListRepo(Number(status));
+      io.emit("speaker-response", {
+        status: "success",
+        message: "Speaker accepted your request.",
+        data,
+      });
+    }
+  });
+
+  socket.on("change-session-status", async (params) => {
+    const output = await EndSessionController(params);
+    socket.broadcast.to(GLOBAL_ROOM).emit("update-session-status", {
+      status: output.status,
+      message: output.message,
+      session_status: params.status,
+    });
+  });
+});
+
+
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
