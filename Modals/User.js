@@ -27,7 +27,8 @@ const userSchema = new mongoose.Schema({
   state: String,
   district: String,
   pinCode: String,
-  autoForms: [], // No change needed if the frontend sends an array
+  autoForms: [],
+  autoFormsFilled: [], // No change needed if the frontend sends an array
   manualForms: [], // No change needed if the frontend sends an array
   manualFormsFilled: [], // No change needed if the frontend sends an array
   appointments: [], // No change needed if the frontend sends an array
