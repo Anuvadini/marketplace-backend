@@ -17,6 +17,7 @@ import command from "nodemon/lib/config/command.js";
 import { sendEmailto } from "./Utils/Mailer.js";
 import http from "http";
 // import sendEmail from "./Utils/Mailer.js";
+import translateTextWithAzure from "./Utils/Translation.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -473,6 +474,22 @@ app.post("/fetch-available-time", async (req, res) => {
     res.status(400).send(error.message);
   }
 });
+
+app.post('/translate', async (req, res) => {
+  const { text, targetLang } = req.body;
+  if (!text || !targetLang) {
+    return res.status(400).send({ error: 'Text and targetLang are required' });
+  }
+
+  const translatedText = await translateTextWithAzure(text, targetLang);
+  if (translatedText) {
+    res.send({ translatedText });
+  } else {
+    res.status(500).send({ error: 'Translation failed' });
+  }
+});
+
+
 
 app.get("/fetch-user-data", verifyToken, async (req, res) => {
   try {
