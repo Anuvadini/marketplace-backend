@@ -312,32 +312,28 @@ app.post("/fetch-ai-forms", async (req, res) => {
 
 app.post("/fetch-manual-forms-filled", async (req, res) => {
   try {
-    const {findid} = req.body
+    const { findid } = req.body;
     const user = await User.findById(findid);
-    console.log("findid",req.body)
-    if(user){ 
-      let manualform = user.manualForms
-      let formresponses = user.manualFormsFilled
-       res.json({manualform,formresponses});
-      }
-    else res.status(420).send(findid);
-  
+    console.log("findid", req.body);
+    if (user) {
+      let manualform = user.manualForms;
+      let formresponses = user.manualFormsFilled;
+      res.json({ manualform, formresponses });
+    } else res.status(420).send(findid);
   } catch (error) {
     res.status(400).send(error.message);
   }
 });
 app.post("/fetch-ai-forms-filled", async (req, res) => {
   try {
-    const {findid} = req.body
+    const { findid } = req.body;
     const user = await User.findById(findid);
-    console.log("findid",req.body)
-    if(user){ 
-      let autoForms = user.autoForms
-      let formresponses = user.autoFormsFilled
-       res.json({autoForms,formresponses});
-      }
-    else res.status(420).send(findid);
-  
+    console.log("findid", req.body);
+    if (user) {
+      let autoForms = user.autoForms;
+      let formresponses = user.autoFormsFilled;
+      res.json({ autoForms, formresponses });
+    } else res.status(420).send(findid);
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -391,8 +387,13 @@ app.post("/book-appointment", async (req, res) => {
     });
 
     await user.save();
-    sendEmailto(formdata.Email,formdata.FirstName,formdata.dateandtime, user.businessName)
-    let appointment = user.appointments
+    sendEmailto(
+      formdata.Email,
+      formdata.FirstName,
+      formdata.dateandtime,
+      user.businessName
+    );
+    let appointment = user.appointments;
     res.status(200).json({ appointment });
   } catch (error) {
     res.status(400).send(error.message);
