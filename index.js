@@ -277,12 +277,34 @@ app.post("/save-filled-manual-form", async (req, res) => {
     res.status(400).send(error.message);
   }
 });
+// save filled ai created form data
+app.post("/save-filled-ai-form", async (req, res) => {
+  try {
+    const user = await User.findById(req.body.id);
+    user.autoFormsFilled.push({
+      formID: req.body.formID,
+      formData: req.body.formData,
+    });
+    await user.save();
+    res.json(user);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
 
 // get all manually created forms
 app.post("/fetch-manual-forms", async (req, res) => {
   try {
     const user = await User.findById(req.body.id);
     res.json(user.manualForms);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+app.post("/fetch-ai-forms", async (req, res) => {
+  try {
+    const user = await User.findById(req.body.id);
+    res.json(user.autoForms);
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -302,16 +324,30 @@ app.post("/fetch-manual-forms-filled", async (req, res) => {
     res.status(400).send(error.message);
   }
 });
+app.post("/fetch-ai-forms-filled", async (req, res) => {
+  try {
+    const { findid } = req.body;
+    const user = await User.findById(findid);
+    console.log("findid", req.body);
+    if (user) {
+      let autoForms = user.autoForms;
+      let formresponses = user.autoFormsFilled;
+      res.json({ autoForms, formresponses });
+    } else res.status(420).send(findid);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
 
 app.post("/add-generated-forms", verifyToken, async (req, res) => {
   try {
-    const { formid } = req.body;
-    console.log(formid);
+    const { aiform } = req.body;
+    console.log(aiform);
     const user = await User.findById(req.user.id);
     if (!user.autoForms) {
       user.autoForms = [];
     }
-    user.autoForms.push(formid);
+    user.autoForms = aiform;
     await user.save();
     res.json(user);
   } catch (error) {
