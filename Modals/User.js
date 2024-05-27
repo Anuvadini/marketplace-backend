@@ -40,6 +40,7 @@ const userSchema = new mongoose.Schema({
   availableHours: [], // Assuming this remains an array of strings or objects as per the design
   availableDays: [], // Same as above
   collectionName: String,
+  appointments: [],
 });
 
 // Pre-save hook to hash password before saving a user document

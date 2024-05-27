@@ -69,7 +69,9 @@ app.post("/sign-up", async (req, res) => {
       dirPath,
     });
     const response = await user.save();
-    const token = jwt.sign({ id: user._id,email }, "secretKey", { expiresIn: "1h" });
+    const token = jwt.sign({ id: user._id, email }, "secretKey", {
+      expiresIn: "1h",
+    });
     res.status(201).json({ token, userType });
   } catch (error) {
     res.status(400).send(error.message);
@@ -84,7 +86,9 @@ app.post("/sign-in", async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).send("Authentication failed");
     }
-    const token = jwt.sign({ id: user._id ,email  }, "secretKey", { expiresIn: "1h" });
+    const token = jwt.sign({ id: user._id, email }, "secretKey", {
+      expiresIn: "1h",
+    });
     res.json({ token, userType: user.userType });
   } catch (error) {
     res.status(400).send(error.message);
@@ -332,8 +336,10 @@ app.post("/book-appointment", async (req, res) => {
     const parts = dateandtime.split(",");
     const datePart = parts[0].split(": ")[1];
     const timePart = parts[1].trim().split(": ")[1];
+    const appointmentID = uuidv4();
+
     user.appointments.push({
-      appointmentID: uuidv4(),
+      appointmentID: appointmentID,
       appointmentDate: datePart,
       appointmentTime: timePart,
       firstname: formdata.FirstName,
@@ -346,12 +352,39 @@ app.post("/book-appointment", async (req, res) => {
     });
 
     await user.save();
+
+    const randomPassword = Math.random().toString(36).slice(-8);
+
+    const dirPath = createFolder(`${USERDATAFOLDER}/${formdata.Email}`);
+    const gender = "male";
+    const language = "en-IN";
+
+    const newuser = new User({
+      email: formdata.Email,
+      password: randomPassword,
+      dirPath,
+      gender,
+      language,
+      userType: "user",
+      fullname: formdata.FirstName + " " + formdata.LastName,
+      mobilenumber: formdata.MobilePn,
+      appointments: [],
+    });
+
+    newuser.appointments.push({
+      appointmentID: appointmentID,
+      merchantId: req.body.id,
+    });
+    await newuser.save();
+
     sendEmailto(
       formdata.Email,
       formdata.FirstName,
       formdata.dateandtime,
-      user.businessName
+      user.businessName,
+      randomPassword
     );
+
     let appointment = user.appointments;
     res.status(200).json({ appointment });
   } catch (error) {
@@ -444,6 +477,38 @@ app.post("/fetch-available-time", async (req, res) => {
 app.get("/fetch-user-data", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
+    if (user.userType === "user") {
+      // extract appointment data from merchants and also include it
+      const appointments = user.appointments;
+      // appointments is a list of {appointmentID, merchantId}
+
+      const merchantAppointments = [];
+      for (let i = 0; i < appointments.length; i++) {
+        const merchant = await User.findById(appointments[i].merchantId);
+        merchantAppointments.push({
+          appointmentID: appointments[i].appointmentID,
+          merchantName: merchant.businessName,
+          merchantEmail: merchant.email,
+          merchantMobile: merchant.mobilenumber,
+          discussion: merchant.appointments.find(
+            (appointment) =>
+              appointment.appointmentID === appointments[i].appointmentID
+          ).discussion,
+
+          appointmentDate: merchant.appointments.find(
+            (appointment) =>
+              appointment.appointmentID === appointments[i].appointmentID
+          ).appointmentDate,
+          appointmentTime: merchant.appointments.find(
+            (appointment) =>
+              appointment.appointmentID === appointments[i].appointmentID
+          ).appointmentTime,
+        });
+      }
+
+      res.json({ ...user._doc, appointments, merchantAppointments });
+      return;
+    }
     res.json(user);
   } catch (error) {
     res.status(400).send(error.message);
@@ -472,15 +537,14 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     // Remove the user from the stored data when they disconnect
     const userId = Object.keys(userList).find(
-        (key) => userList[key] === socket.id
+      (key) => userList[key] === socket.id
     );
     delete userList[userId];
   });
 
-  socket.on("send-message", ( data ) => {
-
-    const { receiver_id, message ,sender} = data;
-   /* liveSession.addMessage({
+  socket.on("send-message", (data) => {
+    const { receiver_id, message, sender } = data;
+    /* liveSession.addMessage({
       sessionID,
       sender: username,
       session: GLOBAL_ROOM,
@@ -491,7 +555,7 @@ io.on("connection", (socket) => {
       endTime: end,
     });*/
 
-   /* socket.broadcast.to(GLOBAL_ROOM).emit("receive-message", {
+    /* socket.broadcast.to(GLOBAL_ROOM).emit("receive-message", {
       username,
       gender,
       translated,
@@ -499,12 +563,11 @@ io.on("connection", (socket) => {
       end,
     });*/
 
-    socket.broadcast.to( userList[receiver_id] ).emit( "receive-message", {
+    socket.broadcast.to(userList[receiver_id]).emit("receive-message", {
       receiver_id,
       message,
-      sender
-    } );
-
+      sender,
+    });
   });
 
   //============= send and receive a speak request ==============//
@@ -541,6 +604,5 @@ io.on("connection", (socket) => {
     });
   });
 });
-
 
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
