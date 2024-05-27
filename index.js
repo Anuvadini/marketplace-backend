@@ -69,8 +69,7 @@ app.post("/sign-up", async (req, res) => {
       dirPath,
     });
     const response = await user.save();
-    console.log(response);
-    const token = jwt.sign({ id: user._id }, "secretKey", { expiresIn: "1h" });
+    const token = jwt.sign({ id: user._id,email }, "secretKey", { expiresIn: "1h" });
     res.status(201).json({ token, userType });
   } catch (error) {
     res.status(400).send(error.message);
@@ -85,7 +84,7 @@ app.post("/sign-in", async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).send("Authentication failed");
     }
-    const token = jwt.sign({ id: user._id }, "secretKey", { expiresIn: "1h" });
+    const token = jwt.sign({ id: user._id ,email  }, "secretKey", { expiresIn: "1h" });
     res.json({ token, userType: user.userType });
   } catch (error) {
     res.status(400).send(error.message);
@@ -480,7 +479,7 @@ io.on("connection", (socket) => {
 
   socket.on("send-message", ( data ) => {
 
-    const { receiver_id, message } = data;
+    const { receiver_id, message ,sender} = data;
    /* liveSession.addMessage({
       sessionID,
       sender: username,
@@ -502,7 +501,8 @@ io.on("connection", (socket) => {
 
     socket.broadcast.to( userList[receiver_id] ).emit( "receive-message", {
       receiver_id,
-      message
+      message,
+      sender
     } );
 
   });
