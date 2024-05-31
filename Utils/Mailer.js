@@ -31,7 +31,6 @@
 // export default sendEmail;
 
 import nodemailer from "nodemailer";
-import axios from "axios";
 const sendOTP = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
